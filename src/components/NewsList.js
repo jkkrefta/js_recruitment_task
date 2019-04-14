@@ -1,14 +1,19 @@
 import Component from './Component';
 import Article from './Article';
 
+function createArticle(htmlElement, index, application) {
+    const listElement = document.createElement('li');
+    htmlElement.appendChild(listElement);
+    return new Article({ element: listElement, state: { index }, application })
+}
+
 export default class NewsList extends Component {
     constructor({ element, application }) {
         super({ element, application });
-        this.innerComponents = [];
-        for(var index=0; index<10; index++) {
-            const listElement = document.createElement('li');
-            element.appendChild(listElement);
-            this.innerComponents.push(new Article({ element: listElement, state: { index: index }, application }));
-        }
+    }
+
+    renderer() {
+        this.htmlElement.innerHTML = '';
+        this.application.state.articles.forEach((_, index) => createArticle(this.htmlElement, index, this.application).renderer());
     }
 };

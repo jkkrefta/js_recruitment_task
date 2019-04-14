@@ -1,26 +1,37 @@
+import { noop } from './helpers';
+
 function fetchNews(text, { apiKey, section, fromDate, toDate, page = 1 }) {
     const optionalSection = section === '' || section === 'all' ? '': `&section=${section}`;
     const optionalText = text ? `&q=${text}`: '';
     const query = `https://content.guardianapis.com/search?from-date=${fromDate}&to-date=${toDate}&page=${page}${optionalSection}${optionalText}&api-key=${apiKey}`;
-    return fetch(query, {
-        mode: 'cors',
-    })
-    .then(response => {
-        return response.json();
-    });
+    return fetch(query, { mode: 'cors' }).then(response => response.json());
 };
 
+function mapNewsToArticles(news) {
+    return {
+        header: news.webTitle,
+        sectionName: news.sectionName,
+        publicationDate: news.webPublicationDate,
+        url: news.webUrl
+    };
+}
+
+function createFromDate() {
+    const now = new Date(Date.now());
+    return new Date(now.setMonth(now.getUTCMonth() -1));
+}
+
 export default class Application {
-    constructor() {
+    constructor(config) {
         this.components = [];
         this.state = {
             text: '',
             searchOptions: {
                 section: '',
-                fromDate: '2019-04-01',
-                toDate: '2019-04-30',
+                fromDate: createFromDate().toISOString(),
+                toDate: new Date(Date.now()).toISOString(),
                 page: 1,
-                apiKey: 'b083ec8f-45c1-40e2-99b4-ddc95c6285aa'
+                apiKey: config['the guardian']['api-key']
             },
             pageCount: 0,
             articles: [],
@@ -32,27 +43,18 @@ export default class Application {
         this.components.push(component);
     }
 
-    updateComponents() {
+    rerenderComponents() {
         this.components.forEach(component => {
-            component.renderer ? component.renderer(): () => {};
+            component.renderer ? component.renderer(): noop();
         });
     }
 
     search() {
         const self = this;
-        fetchNews(this.state.text, this.state.searchOptions).then(response => {
-            const results = response.response.results.map(data => {
-                return {
-                    header: data.webTitle,
-                    sectionName: data.sectionName,
-                    publicationDate: data.webPublicationDate,
-                    url: data.webUrl
-                };
-            });
-
-            self.state.pageCount = response.response.pages;
-            self.state.articles = results;
-            self.updateComponents();
+        fetchNews(this.state.text, this.state.searchOptions).then(news => {
+            self.state.pageCount = news.response.pages;
+            self.state.articles = news.response.results.map(mapNewsToArticles);
+            self.rerenderComponents();
         });
     }
 
@@ -68,12 +70,12 @@ export default class Application {
     saveArticle(index) {
         this.state.saved.push(this.state.articles[index]);
         this.saveToLocalStorage();
-        this.updateComponents();
+        this.rerenderComponents();
     }
 
     removeArticle(index) {
         this.state.saved.splice(index, 1);
         this.saveToLocalStorage();
-        this.updateComponents();
+        this.rerenderComponents();
     }
 }

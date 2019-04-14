@@ -5,8 +5,9 @@ import SearchBar from './components/SearchBar';
 import Pagination from './components/Pagination';
 import ReadLaterList from './components/ReadLaterList';
 import Application from './Application';
+import config from './appconfig.json';
 
-const application = new Application();
+const application = new Application(config);
 new NewsList({ element: document.getElementsByClassName('newsList')[0], application });
 new SectionFilter({ element: document.getElementById('sectionSelect'), application });
 new SearchBar({ element: document.getElementById('newsContentSearch'), application });

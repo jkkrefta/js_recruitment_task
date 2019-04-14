@@ -1,9 +1,23 @@
 import Component from './Component';
 
-function createOnClick(index, application) {
+function createOnClickHandler(index, application) {
     return event => {
         application.removeArticle(index);
     }
+}
+
+function bindRemoveButton(htmlElement, index, application) {
+    htmlElement.querySelector(`#saved${index} > button.button.button-clear`).addEventListener('click', createOnClickHandler(index, application));
+}
+
+function template(index, { header, url }) {
+    return `
+        <h4 class="readLaterItem-title">${header}</h4>
+        <section id="saved${index}">
+            <a href="${url}" class="button button-clear">Read</a>
+            <button class="button button-clear">Remove</button>
+        </section>
+    `;
 }
 
 export default class ReadLater extends Component {
@@ -12,16 +26,9 @@ export default class ReadLater extends Component {
     }
 
     renderer() {
-        const saved = this.application.state.saved[this.state.index];
-        this.htmlElement.innerHTML = `
-            <h4 class="readLaterItem-title">${saved.header}</h4>
-            <section id="saved${this.state.index}">
-                <a href="${saved.url}" class="button button-clear">Read</a>
-                <button class="button button-clear">Remove</button>
-            </section>
-        `;
-
-        const button = this.htmlElement.querySelector(`#saved${this.state.index} > button.button.button-clear`);
-        button.addEventListener('click', createOnClick(this.state.index, this.application));
+        const index = this.state.index;
+        const saved = this.application.state.saved[index];
+        this.htmlElement.innerHTML = template(index, saved);
+        bindRemoveButton(this.htmlElement, index, this.application);
     }
 }
